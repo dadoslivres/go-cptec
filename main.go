@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"os"
 	"strings"
-	"time"
 	"unicode"
 
 	"github.com/k0kubun/pp"
@@ -23,7 +22,6 @@ import (
 	"github.com/gocolly/colly"
 	"github.com/gosimple/slug"
 	_ "github.com/mattn/go-sqlite3"
-	tb "gopkg.in/tucnak/telebot.v2"
 )
 
 //curl 'https://www.cptec.inpe.br/autocomplete?term=bom%20jesus%20dos%20perd'
@@ -194,7 +192,6 @@ func addCPTECCitiesToDB(cities []*City) {
 }
 
 var db *sql.DB
-var b *tb.Bot
 
 func main() {
 	isBuild := len(os.Args) > 1 && os.Args[1:][0] == "build"
@@ -221,42 +218,7 @@ func main() {
 			}
 			addCPTECCitiesToDB(CPTECCities)
 		}
-	} else {
-		b, err = tb.NewBot(tb.Settings{
-			Token:  "TELEGRAM TOKEN HERE",
-			Poller: &tb.LongPoller{Timeout: 10 * time.Second},
-		})
-
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
-
-		b.Handle("/weather", replyForecast)
-		b.Handle("/clima", replyForecast)
-		b.Handle("/forecast", replyForecast)
-		b.Handle("/previsao", replyForecast)
-		b.Handle(tb.OnText, replyForecast)
-
-		b.Start()
 	}
-}
-
-func replyForecast(m *tb.Message) {
-	city, err := getCity(m.Payload)
-	if err != nil {
-		b.Send(m.Chat, "Não encontrei este município.")
-		return
-	}
-	forecast, err := getForecast(city)
-	if err != nil {
-		b.Send(m.Chat, fmt.Sprintf("Erro ao obter previsão: %s", err))
-		return
-	}
-
-	b.Send(m.Chat, forecastString(forecast), &tb.SendOptions{
-		ParseMode: tb.ModeMarkdown,
-	})
 }
 
 func forecastString(f *ForecastResult) (s string) {
