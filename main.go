@@ -161,7 +161,7 @@ func buildDoc(r *colly.Response) (*goquery.Document, error) {
 	return goquery.NewDocumentFromReader(bytes.NewReader(r.Body))
 }
 
-func getListOfCities() (cities []string, err error) {
+func getListOfCities(db *sql.DB) (cities []string, err error) {
 	rows, err := db.Query("select id, name from ibge")
 	if err != nil {
 		log.Fatal(err)
@@ -181,23 +181,10 @@ func getListOfCities() (cities []string, err error) {
 	return
 }
 
-func addCPTECCitiesToDB(cities []*City) {
-	for _, city := range cities {
-		_, err := db.Exec("insert into cptec(id, name, state) values(?,?,?)", city.ID, city.Name, city.State)
-		if err != nil {
-			log.Panic(err)
-		}
-	}
-	return
-}
-
-var db *sql.DB
-
 func main() {
 	isBuild := len(os.Args) > 1 && os.Args[1:][0] == "build"
 
-	var err error
-	db, err = sql.Open("sqlite3", "./cities.db")
+	db, err := sql.Open("sqlite3", "./cities.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -216,7 +203,12 @@ func main() {
 			if err != nil {
 				log.Panic(err)
 			}
-			addCPTECCitiesToDB(CPTECCities)
+			for _, city := range cities {
+				_, err := db.Exec("insert into cptec(id, name, state) values(?,?,?)", city.ID, city.Name, city.State)
+				if err != nil {
+					log.Panic(err)
+				}
+			}
 		}
 	}
 }
@@ -332,7 +324,7 @@ func friendlyClimate(f *Forecast) string {
 	return emojiMap[f.Climate] + " " + climateMap[f.Climate]
 }
 
-func getCity(str string) (city *City, err error) {
+func getCity(db *sql.DB, str string) (city *City, err error) {
 	city = &City{}
 	stmt, err := db.Prepare("select ID, Name, State from cptec where cptec = ?")
 	if err != nil {
