@@ -39,8 +39,15 @@ type City struct {
 	State string `xml:"uf"`
 }
 
-type Result struct {
-	Cities []*City `xml:"cidade"`
+type Cities struct {
+	City []City `xml:"cidade"`
+}
+
+func newUTF8Decoder(body []byte) *xml.Decoder {
+	decoder := xml.NewDecoder(bytes.NewReader(body))
+	decoder.CharsetReader = charset.NewReaderLabel
+
+	return decoder
 }
 
 type Forecast struct {
@@ -71,10 +78,7 @@ func getCPTECCities(s string) (cities []*City, err error) {
 		return
 	}
 
-	result := Result{}
-
-	decoder := xml.NewDecoder(bytes.NewReader(body))
-	decoder.CharsetReader = charset.NewReaderLabel
+	decoder := newUTF8Decoder(body)
 	err = decoder.Decode(&result)
 
 	if err != nil {
@@ -94,8 +98,7 @@ func getForecast(city *City) (result *ForecastResult, err error) {
 
 	defer resp.Body.Close()
 
-	decoder := xml.NewDecoder(resp.Body)
-	decoder.CharsetReader = charset.NewReaderLabel
+	decoder := newUTF8Decoder(body)
 	err = decoder.Decode(&result)
 	if err != nil {
 		return
