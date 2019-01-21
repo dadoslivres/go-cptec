@@ -18,9 +18,6 @@ import (
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
 
-	"github.com/PuerkitoBio/goquery"
-	"github.com/gocolly/colly"
-	"github.com/gosimple/slug"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -103,56 +100,7 @@ func getForecast(city *City) (result *ForecastResult, err error) {
 	if err != nil {
 		return
 	}
-	today, err := getTodayForecast(city)
-	if err != nil {
-		return
-	}
-	result.Forecasts = append([]*Forecast{today}, result.Forecasts...)
 	return
-}
-
-// todays forecast can only be scraped from their site
-func getTodayForecast(city *City) (forecast *Forecast, err error) {
-	requestURL := fmt.Sprintf(
-		"https://www.cptec.inpe.br/previsao-tempo/%s/%s",
-		strings.ToLower(city.State),
-		slug.Make(city.Name),
-	)
-	fmt.Println("GET %s", requestURL)
-	resp, err := http.Get(requestURL)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	if err != nil {
-		return
-	}
-
-	forecast = &Forecast{}
-
-	imageSrc, _ := doc.Find("img.img-responsive.center-block").First().Attr("src")
-	imageSrcSplit := strings.Split(imageSrc, "/")
-	imageSrc = strings.Split(imageSrcSplit[len(imageSrcSplit)-1], ".")[0]
-	forecast.Climate = strings.Split(imageSrcSplit[len(imageSrcSplit)-1], "_")[0]
-
-	forecast.Description = strings.TrimSpace(doc.Find("div.col-md-12 > div.d-flex > div.p-2.text-center").First().Text())
-
-	forecast.Max = doc.Find("div.temperaturas span.text-danger").First().Text()
-	forecast.Max = strings.Replace(forecast.Max, "°", "", -1)
-
-	forecast.Min = doc.Find("div.temperaturas span.text-primary").First().Text()
-	forecast.Min = strings.Replace(forecast.Min, "°", "", -1)
-
-	uvSelection := doc.Find("div.col-md-12 > div.row.align-middle.justify-content-md-center").Eq(2)
-	forecast.UV = uvSelection.Find("div.col-md-4 span").Last().Text()
-
-	return
-}
-
-func buildDoc(r *colly.Response) (*goquery.Document, error) {
-	return goquery.NewDocumentFromReader(bytes.NewReader(r.Body))
 }
 
 func getListOfCities(db *sql.DB) (cities []string, err error) {
