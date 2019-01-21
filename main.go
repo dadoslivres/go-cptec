@@ -24,14 +24,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-//curl 'https://www.cptec.inpe.br/autocomplete?term=bom%20jesus%20dos%20perd'
-//-H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:63.0) Gecko/20100101 Firefox/63.0'
-//-H 'Accept: application/json, text/javascript, */*; q=0.01' -H 'Accept-Language: en-US,en;q=0.5'
-//--compressed -H 'Referer: https://www.cptec.inpe.br/' -H 'X-Requested-With: XMLHttpRequest'
-//-H 'Connection: keep-alive'
-//-H 'Cookie: XSRF-TOKEN=eyJpdiI6Ikx1RXdcL1gzWHhyYU9JYWdhYWt5S2t3PT0iLCJ2YWx1ZSI6InFZazVRMGtUZnFITThHTTkzT0dmVVFqNmlCVnBtNWJZZW1Va3gwT1FJbFwvMWhkbyt6XC9aNXhseUtzZG9lYVJSd093QjhnQWllTU55S0tjUTJHaUpvQkE9PSIsIm1hYyI6ImMzOGM2YTM0MDcxNTdhNTFlODg5NjhjN2Q4YjIwODI4YmU0MWVkN2VlNGQ0Yzc4Y2Q1MzhjOWQ2MmYzYTcwZDEifQ%3D%3D; portal_cptec_session=eyJpdiI6InM2U010K3hFVGpCSURtTW9yN0o1RlE9PSIsInZhbHVlIjoiQmt0T0dRU2Q4cVpBdlpCUmVmNTNLMmtHNUJsWFdsWk9rb1dxNkNZQ2d2Zk03cWdGd2tMSHd2Szh1T0czaWVSRTJsR0E3TUM1end3M0Rsek9ONStlTWc9PSIsIm1hYyI6ImIwZjM3MzgwYjNhMTA4NDE0MmVhNzg5MDNmYWQzOWRkMDQ5YTdkYzFiNjI0ZmFlMGY1MmVjNTFjNWI1NDU2MWQifQ%3D%3D'
-//-H 'Pragma: no-cache' -H 'Cache-Control: no-cache'
-
 func normalizeName(s string) string {
 	t := transform.Chain(
 		norm.NFD,
@@ -83,9 +75,11 @@ func getCPTECCities(s string) (cities []*City, err error) {
 	}
 
 	result := Result{}
+
 	decoder := xml.NewDecoder(bytes.NewReader(body))
 	decoder.CharsetReader = charset.NewReaderLabel
 	err = decoder.Decode(&result)
+
 	if err != nil {
 		return
 	}
